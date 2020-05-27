@@ -14,7 +14,7 @@ setuptools.setup(
                  "of STIB/MIVB (opendata-api.stib-mivb.be)"),
     long_description=LONG,
     long_description_content_type="text/markdown",
-    url="https://github.com/helldog136/pystibmvib",
+    url="https://github.com/helldog136/pystibmivb",
     download_url="https://github.com/helldog136/pystibmivb/archive/1.0.0.tar.gz",
     packages=setuptools.find_packages(exclude=('tests',)),
     install_requires=[
