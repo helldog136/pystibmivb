@@ -24,4 +24,4 @@ jobs:
       deploy: &pypi
         provider: pypi
         user: "__token__"
-        password: $pypi_token
+        password: $pypi_secret
