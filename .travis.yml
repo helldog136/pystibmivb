@@ -1,0 +1,27 @@
+language: python
+
+python:
+  - 3.8
+before_install:
+  - python --version
+  - pip install -U pip
+  - pip install -U pytest
+  - pip install codecov
+install:
+  - pip install -r requirements.txt
+  - pip install ".[test]" . # install package + test dependencies
+script: pytest # run tests
+stages:
+  - deploy
+
+jobs:
+  include:
+    # Deploy to PyPi
+    - stage: deploy
+      name: "Deploy to PyPi"
+      install: pip install -U pip setuptools wheel
+      script: skip
+      deploy: &pypi
+        provider: pypi
+        user: "__token__"
+        password: $pypi_token
