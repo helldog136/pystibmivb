@@ -44,5 +44,8 @@ if __name__ == '__main__':
     LOOP = asyncio.get_event_loop()
     LOOP.run_until_complete(go(LOOP))
 
+```
 
+Old repository: https://github.com/helldog136/pystibmvib
+Initial inspiration came from : https://github.com/bollewolle/pydelijn 
 
