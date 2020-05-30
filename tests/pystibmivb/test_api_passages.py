@@ -114,6 +114,21 @@ class TestPassages(unittest.TestCase):
         self.assertEqual(js["arriving_in"]["min"], 3)
         self.assertEqual(js["arriving_in"]["sec"], 24)
 
+    def test_empty_response_crawls_for_data(self):
+        async def go(LOOP):
+            stop_name = "De Brouckère"
+            lines_filter = [(5, 1)]
+            custom_session = aiohttp.ClientSession()
+
+            APIClient = MockAPIClient()
+
+            service = STIBService(APIClient)
+            passages = await service.get_passages(stop_name, lines_filter)
+
+            self.assertGreaterEqual(len(passages), 1)
+
+        self.LOOP.run_until_complete(go(self.LOOP))
+
 
 if __name__ == '__main__':
     unittest.main()
