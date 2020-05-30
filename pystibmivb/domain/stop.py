@@ -29,6 +29,7 @@ class StopInfo:
         self.stop_name = stop_name
         self.lines = []
         self.line_infos = {}
+        self.locations = {}
 
     def add_stop(self, stop_id, line_nr, variante, terminus):
         self.lines.append(AtomicStop(stop_id, line_nr, variante, terminus))
@@ -42,5 +43,21 @@ class StopInfo:
     def get_lines(self):
         return self.lines
 
+    def get_stop_ids(self):
+        return [ln.get_stop_id() for ln in self.lines]
+
     def __str__(self):
-        return f"{self.stop_name}: {[str(k) for k in self.lines]}: {[str(v) for v in self.line_infos.values()]}"
+        return f"{self.stop_name}({self.get_location()}): {[str(k) for k in self.lines]}: {[str(v) for v in self.line_infos.values()]}"
+
+    def set_locations(self, locs):
+        self.locations = locs
+
+    def get_locations(self):
+        """ https://xkcd.com/2170/ """
+        return self.locations
+
+    def get_location(self):
+        """ https://xkcd.com/2170/ """
+        latitudes = [loc["lat"] for loc in self.locations.values()]
+        longitudes = [loc["lon"] for loc in self.locations.values()]
+        return {"lat": sum(latitudes)/len(latitudes), "lon": sum(longitudes)/len(longitudes)}

@@ -42,6 +42,44 @@ class TestShapefileReader(unittest.TestCase):
 
         self.LOOP.run_until_complete(go(self.LOOP))
 
+    def test_location(self):
+        # https://xkcd.com/2170/
+        async def go(LOOP):
+            APIClient = MockAPIClient()
+
+            sf_reader = ShapefileService(APIClient)
+
+            info = await sf_reader.get_stop_infos("Scherdemael")
+
+            self.assertAlmostEqual(info.get_location()["lat"], 50.8311, delta=0.0001)
+            self.assertAlmostEqual(info.get_location()["lon"],  4.2896, delta=0.0001)
+
+
+
+        self.LOOP.run_until_complete(go(self.LOOP))
+
+
+    def test_locations(self):
+        # https://xkcd.com/2170/
+        async def go(LOOP):
+            APIClient = MockAPIClient()
+
+            sf_reader = ShapefileService(APIClient)
+
+            info = await sf_reader.get_stop_infos("Scherdemael")
+
+            print(info.get_locations())
+            self.assertAlmostEqual(info.get_locations()['3755']["lat"], 50.8312, delta=0.0001)
+            self.assertAlmostEqual(info.get_locations()['3755']["lon"],  4.2900, delta=0.0001)
+
+            self.assertAlmostEqual(info.get_locations()['3713']["lat"], 50.8309, delta=0.0001)
+            self.assertAlmostEqual(info.get_locations()['3713']["lon"],  4.2892, delta=0.0001)
+
+
+
+        self.LOOP.run_until_complete(go(self.LOOP))
+
+
 
 if __name__ == '__main__':
     unittest.main()

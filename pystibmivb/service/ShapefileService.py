@@ -22,6 +22,7 @@ SHAPEFILESFOLDERPATH = tempfile.gettempdir() + SEP + "stibmivbshapefiles"
 LINES_FILENAME = "ACTU_LINES"
 LINES_GTFS_FILENAME = "routes.txt"
 STOPS_FILENAME = "ACTU_STOPS"
+STOPS_GTFS_FILENAME = "stops.txt"
 TIMESTAMPFILENAME = "timestamp"
 DELTA_MAX_TIMESTAMP = 1 * 60 * 60 * 24 * 7  # 1 week
 
@@ -65,6 +66,7 @@ class ShapefileService:
                 if record["alpha_fr"].upper() == stop_name.upper() or record["alpha_nl"].upper() == stop_name.upper():
                     res.add_stop(record["stop_id"], record["numero_lig"], record["variante"], record["terminus"])
                     res.add_line_info(await self.get_line_info(record["numero_lig"]))
+            res.set_locations(await self.get_stop_locations(res.get_stop_ids()))
             self.stops_cache[stop_name] = res
         return self.stops_cache[stop_name]
 
@@ -156,3 +158,19 @@ class ShapefileService:
                 LOGGER.info(
                     f"Delta since last update is {now - timestamp} which is greater than {DELTA_MAX_TIMESTAMP}. Invalidating files...")
         return must_update
+
+    async def get_stop_locations(self, stop_ids: list):
+        await self._refresh_files()
+        res = {}
+        for stop_id in stop_ids:
+            res[stop_id] = await self.get_stop_location(stop_id)
+        return res
+
+    async def get_stop_location(self, stop_id: str):
+        await self._refresh_files()
+        with open(SHAPEFILESFOLDERPATH + SEP + STOPS_GTFS_FILENAME, 'r') as stops_file:
+            for info_stop in stops_file:
+                splitted_info_line = info_stop.split(',')
+                if splitted_info_line[0].strip() == stop_id:
+                    return {"lat": float(splitted_info_line[4]), "lon":  float(splitted_info_line[5])}
+        return {"lat": 50.847180, "lon": 4.361610}
