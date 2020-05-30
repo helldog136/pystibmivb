@@ -55,7 +55,7 @@ class STIBService:
             raw_passages = json.loads(raw_str_passages)
             for point in raw_passages["points"]:
                 if len(point["passingTimes"]) == 0:
-                    raise self._raiseNoAvailableNextPassageException()
+                    raise self._raiseNoAvailableNextPassageException() 
                 else:
                     for json_passage in point["passingTimes"]:
                         if len(passages) >= max_passages:
