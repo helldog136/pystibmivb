@@ -6,7 +6,7 @@ import unittest
 
 import aiohttp
 
-from pystibmivb import STIBService, Passage, LineInfo, InvalidLineFilterException
+from pystibmivb import STIBService, Passage, LineInfo, InvalidLineFilterException, NoScheduleFromAPIException
 from tests.pystibmivb import MockAPIClient
 
 
@@ -123,9 +123,16 @@ class TestPassages(unittest.TestCase):
             APIClient = MockAPIClient()
 
             service = STIBService(APIClient)
-            passages = await service.get_passages(stop_name, lines_filter)
-
+            exception = "Unraised"
+            try:
+                passages = await service.get_passages(stop_name, lines_filter, now=datetime.datetime(2020, 1, 28, hour=23, minute=59, second=52))
+            except NoScheduleFromAPIException as e:
+                exception = "Raised"
+                passages = e.get_next_passages()
+            self.assertEqual(exception, "Raised")
             self.assertGreaterEqual(len(passages), 1)
+            self.assertEqual(passages[0]['expected_arrival_time'], '2020-01-29T00:06:31')
+
 
         self.LOOP.run_until_complete(go(self.LOOP))
 
