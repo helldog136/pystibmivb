@@ -46,3 +46,8 @@ class MockAPIClient(AbstractSTIBAPIClient):
                                 }
                             ]
                         }'''
+            if endpoint_suffix.endswith("8012"):
+                now = datetime.datetime.now()
+                delta1 = datetime.timedelta(minutes=3, seconds=25)
+                delta2 = datetime.timedelta(minutes=13, seconds=22)
+                return '''{"points": [{"passingTimes": [], "pointId": "8012"}]}'''
