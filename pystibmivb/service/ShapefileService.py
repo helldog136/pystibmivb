@@ -1,10 +1,10 @@
-import datetime
 import logging
 import os
 import tempfile
 import zipfile
 
 import shapefile
+import datetime
 
 from pystibmivb.client import AbstractSTIBAPIClient
 from pystibmivb.domain.line import LineInfo
@@ -110,9 +110,8 @@ class ShapefileService:
             res = StopInfo(stop_name)
             for record in sf.records():
                 record = record.as_dict()
-                if record["alpha_fr"].upper() == stop_name.upper() or record["alpha_nl"].upper() == stop_name.upper() \
-                        or record["descr_fr"].upper() == stop_name.upper() or record[
-                    "descr_nl"].upper() == stop_name.upper():
+                if record["alpha_fr"].upper() == stop_name.upper() or record["alpha_nl"].upper() == stop_name.upper()\
+                        or record["descr_fr"].upper() == stop_name.upper() or record["descr_nl"].upper() == stop_name.upper():
                     res.add_stop(record["stop_id"], record["numero_lig"], record["variante"], record["terminus"])
                     res.add_line_info(await self.get_line_info(record["numero_lig"]))
             res.set_locations(await self.get_stop_locations(res.get_stop_ids()))
@@ -151,7 +150,6 @@ class ShapefileService:
                     output.write(uncompressed)
 
             # TODO os.remove(zip_filename)
-
             LOGGER.info("Finished updating GTFS!")
             self.lines_cache = {}
             self.stops_schedules_cache = {}
