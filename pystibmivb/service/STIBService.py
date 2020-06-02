@@ -27,7 +27,7 @@ class STIBService:
         stop_infos = await self._shapefile_service.get_stop_infos(stop_name)
 
         if lang is None or lang == '':
-            lang = ('fr', 'en')
+            lang = ('fr', 'nl')
 
         atomic_stop_infos = stop_infos.get_atomic_stop_infos(line_filters)
         if len(atomic_stop_infos) < 1:
