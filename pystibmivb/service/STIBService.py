@@ -51,7 +51,7 @@ class STIBService:
                     except KeyError:
                         pass
                     try:
-                        if message.upper() == "FIN DE SERVICE" or message.upper() == "EINDE VAN SERVICE":
+                        if message.upper() == "FIN DE SERVICE" or message.upper() == "EINDE DIENST":
                             delta = datetime.timedelta(minutes=42, seconds=42)
                             passages.append(Passage(stop_id=point["pointId"],
                                                     lineId=json_passage["lineId"],
