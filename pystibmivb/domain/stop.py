@@ -40,8 +40,24 @@ class StopInfo:
     def get_line_info(self, line_nr):
         return self.line_infos[line_nr]
 
-    def get_lines(self):
-        return self.lines
+    def get_atomic_stop_infos(self, line_filters=None):
+        res = []
+        if line_filters is not None and len(line_filters) > 0:
+            line_filter_dict = {}
+            for line_nr, line_variant_or_dest in line_filters:
+                line_filter_dict[line_nr] = line_filter_dict.get(line_nr, [])
+                line_filter_dict[line_nr].append(
+                    line_variant_or_dest.upper() if isinstance(line_variant_or_dest, str) else line_variant_or_dest)
+            for atomic_stop_info in self.lines:
+                if atomic_stop_info.get_line_nr() in line_filter_dict.keys():  # the line nr is included in line_filter
+                    # now we check for direction
+                    if atomic_stop_info.get_destination().upper() in line_filter_dict[atomic_stop_info.get_line_nr()]:
+                        res.append(atomic_stop_info)
+                    elif atomic_stop_info.get_variante() in line_filter_dict[atomic_stop_info.get_line_nr()]:
+                        res.append(atomic_stop_info)
+        else:
+            res = self.lines
+        return res
 
     def get_stop_ids(self):
         return [ln.get_stop_id() for ln in self.lines]
@@ -61,3 +77,9 @@ class StopInfo:
         latitudes = [loc["lat"] for loc in self.locations.values()]
         longitudes = [loc["lon"] for loc in self.locations.values()]
         return {"lat": sum(latitudes)/len(latitudes), "lon": sum(longitudes)/len(longitudes)}
+
+    def get_lines(self, lines_filter=None):
+        return set([asi.get_line_nr() for asi in self.get_atomic_stop_infos(lines_filter)])
+
+    def get_lines_with_destinations(self, lines_filter=None):
+        return [(asi.get_line_nr(), asi.get_destination()) for asi in self.get_atomic_stop_infos(lines_filter)]

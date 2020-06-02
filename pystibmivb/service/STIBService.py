@@ -29,22 +29,7 @@ class STIBService:
         if lang is None or lang == '':
             lang = ('fr', 'en')
 
-        atomic_stop_infos = stop_infos.get_lines()
-        if line_filters is not None and len(line_filters) > 0:
-            line_filter_dict = {}
-            for line_nr, line_variant_or_dest in line_filters:
-                line_filter_dict[line_nr] = line_filter_dict.get(line_nr, [])
-                line_filter_dict[line_nr].append(
-                    line_variant_or_dest.upper() if isinstance(line_variant_or_dest, str) else line_variant_or_dest)
-            new_atomic_stop_infos = []
-            for atomic_stop_info in atomic_stop_infos:
-                if atomic_stop_info.get_line_nr() in line_filter_dict.keys():  # the line nr is included in line_filter
-                    # now we check for direction
-                    if atomic_stop_info.get_destination().upper() in line_filter_dict[atomic_stop_info.get_line_nr()]:
-                        new_atomic_stop_infos.append(atomic_stop_info)
-                    elif atomic_stop_info.get_variante() in line_filter_dict[atomic_stop_info.get_line_nr()]:
-                        new_atomic_stop_infos.append(atomic_stop_info)
-            atomic_stop_infos = new_atomic_stop_infos
+        atomic_stop_infos = stop_infos.get_atomic_stop_infos(line_filters)
         if len(atomic_stop_infos) < 1:
             LOGGER.error("Invalid line filter for stop " + str(stop_name) + " Known infos:" + str(
                 stop_infos) + " Provided line filter:" + str(line_filters))
