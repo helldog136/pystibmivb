@@ -40,7 +40,7 @@ class StopInfo:
     def get_line_info(self, line_nr):
         return self.line_infos[line_nr]
 
-    def get_atomic_stop_infos(self, line_filters=None):
+    def get_atomic_stop_infos(self, line_filters=None) -> list:
         res = []
         if line_filters is not None and len(line_filters) > 0:
             line_filter_dict = {}
@@ -59,8 +59,24 @@ class StopInfo:
             res = self.lines
         return res
 
-    def get_stop_ids(self):
-        return [ln.get_stop_id() for ln in self.lines]
+    def get_stop_ids(self, line_filters=None) -> list:
+        res = []
+        if line_filters is not None and len(line_filters) > 0:
+            line_filter_dict = {}
+            for line_nr, line_variant_or_dest in line_filters:
+                line_filter_dict[line_nr] = line_filter_dict.get(line_nr, [])
+                line_filter_dict[line_nr].append(
+                    line_variant_or_dest.upper() if isinstance(line_variant_or_dest, str) else line_variant_or_dest)
+            for atomic_stop_info in self.lines:
+                if atomic_stop_info.get_line_nr() in line_filter_dict.keys():  # the line nr is included in line_filter
+                    # now we check for direction
+                    if atomic_stop_info.get_destination().upper() in line_filter_dict[atomic_stop_info.get_line_nr()]:
+                        res.append(atomic_stop_info)
+                    elif atomic_stop_info.get_variante() in line_filter_dict[atomic_stop_info.get_line_nr()]:
+                        res.append(atomic_stop_info)
+        else:
+            res = self.lines
+        return [ln.get_stop_id() for ln in res]
 
     def __str__(self):
         return f"{self.stop_name}({self.get_location()}): {[str(k) for k in self.lines]}: {[str(v) for v in self.line_infos.values()]}"

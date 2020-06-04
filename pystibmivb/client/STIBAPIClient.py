@@ -7,10 +7,12 @@ from abc import ABC, abstractmethod
 
 import aiohttp
 import async_timeout
+from yarl import URL
 
 LOGGER = logging.getLogger(__name__)
 
 API_BASE_URL = 'https://opendata-api.stib-mivb.be'
+PASSING_TIME_BY_POINT_SUFFIX = "/OperationMonitoring/4.0/PassingTimeByPoint/"
 
 
 class OAuthTokenManager(object):
@@ -70,6 +72,14 @@ class AbstractSTIBAPIClient(ABC):
     async def api_call(self, endpoint_suffix: str, additional_headers=None):
         pass
 
+    @abstractmethod
+    async def api_call_passingTimeByPoint_for_stop_id(self, point_id: str) -> dict:
+        pass
+
+    @abstractmethod
+    async def api_call_passingTimeByPoint_for_stop_ids(self, point_ids: list) -> dict:
+        pass
+
 
 class STIBAPIClient(AbstractSTIBAPIClient):
     """A class for common functions."""
@@ -99,6 +109,23 @@ class STIBAPIClient(AbstractSTIBAPIClient):
 
         return self.token_manager.token
 
+    async def api_call_passingTimeByPoint_for_stop_id(self, point_id: str) -> dict:
+        return await self.api_call(PASSING_TIME_BY_POINT_SUFFIX+point_id)
+
+    async def _api_call_passingTimeByPoint_for_10_stop_ids(self, point_ids: list) -> dict:
+        return await self.api_call(PASSING_TIME_BY_POINT_SUFFIX + "%2C".join(point_ids))
+
+    async def api_call_passingTimeByPoint_for_stop_ids(self, point_ids: set) -> dict:
+        res = {"points": []}
+        subset_point_ids = []
+        for i in range(1, len(point_ids)+1):
+            subset_point_ids.append(point_ids.pop())
+            if i % 10 == 0 or len(point_ids) == 0:
+                subset_res = await self._api_call_passingTimeByPoint_for_10_stop_ids(subset_point_ids)
+                res["points"].extend(subset_res["points"])
+                subset_point_ids = []
+        return res
+
     async def api_call(self, endpoint_suffix: str, additional_headers=None):
         if additional_headers is None:
             additional_headers = {}
@@ -109,9 +136,10 @@ class STIBAPIClient(AbstractSTIBAPIClient):
         data = None
         try:
             async with async_timeout.timeout(5, loop=self.loop):
-                LOGGER.debug("Endpoint URL: %s", str(endpoint_suffix))
-                response = await self.session.get(url=API_BASE_URL + endpoint_suffix, headers=headers)
-                if response.content_type == "APPLICATION/JSON":
+                called_url = URL(API_BASE_URL + endpoint_suffix, encoded=True)
+                LOGGER.debug("Endpoint URL: %s", str(called_url))
+                response = await self.session.get(url=called_url, headers=headers)
+                if response.content_type.upper() == "APPLICATION/JSON":
                     data = await response.json()
                 elif response.content_type.upper() == "APPLICATION/ZIP":
                     if response.headers.get('Transfer-Encoding') == 'chunked':

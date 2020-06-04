@@ -8,7 +8,6 @@ from pystibmivb.service.ShapefileService import ShapefileService
 
 LOGGER = logging.getLogger(__name__)
 
-PASSING_TIME_BY_POINT_SUFFIX = "/OperationMonitoring/4.0/PassingTimeByPoint/"
 LANG_STOP_NAME = 0
 LANG_MESSAGE = 1
 
@@ -22,12 +21,12 @@ class STIBService:
         self._shapefile_service = ShapefileService(stib_api_client)
         self.api_client = stib_api_client
 
-    async def get_passages(self, stop_name, line_filters=None, max_passages=15, lang: tuple = None,
+    async def get_passages(self, stop_name, line_filters=None, max_passages=30, lang: tuple = None,
                            now=datetime.datetime.now()):
         stop_infos = await self._shapefile_service.get_stop_infos(stop_name)
 
         if lang is None or lang == '':
-            lang = ('fr', 'en')
+            lang = ('fr', 'fr')
 
         atomic_stop_infos = stop_infos.get_atomic_stop_infos(line_filters)
         if len(atomic_stop_infos) < 1:
@@ -36,45 +35,41 @@ class STIBService:
             raise InvalidLineFilterException()
         passages = []
         is_only_end_of_service = True
-        for atomic in atomic_stop_infos:
-            call_url_suffix = PASSING_TIME_BY_POINT_SUFFIX + atomic.get_stop_id()
-
-            raw_str_passages = await self.api_client.api_call(call_url_suffix)
-            raw_passages = json.loads(raw_str_passages)
-            for point in raw_passages["points"]:
-                for json_passage in point["passingTimes"]:
-                    if len(passages) >= max_passages:
-                        break
-                    message = ""
-                    try:
-                        message = json_passage["message"][lang[LANG_MESSAGE]]
-                    except KeyError:
-                        pass
-                    try:
-                        if message.upper() == "FIN DE SERVICE" or message.upper() == "EINDE VAN SERVICE":
-                            delta = datetime.timedelta(minutes=42, seconds=42)
-                            passages.append(Passage(stop_id=point["pointId"],
-                                                    lineId=json_passage["lineId"],
-                                                    destination="",
-                                                    expectedArrivalTime=(now + delta).strftime("%Y-%m-%dT%H:%M:%S"),
-                                                    lineInfos=await self._shapefile_service.get_line_info(
-                                                        json_passage["lineId"]),
-                                                    message=message,
-                                                    now=now))
-                        else:
-                            is_only_end_of_service = False
-                            passages.append(Passage(stop_id=point["pointId"],
-                                                    lineId=json_passage["lineId"],
-                                                    destination=json_passage["destination"][lang[LANG_STOP_NAME]],
-                                                    expectedArrivalTime=json_passage["expectedArrivalTime"],
-                                                    lineInfos=await self._shapefile_service.get_line_info(
-                                                        json_passage["lineId"]),
-                                                    message=message,
-                                                    now=now))
-                    except KeyError as ke:
-                        LOGGER.error(
-                            "Error while parsing response from STIB. Raw response is: " + str(raw_str_passages))
-                        raise ke
+        raw_passages = await self.api_client.api_call_passingTimeByPoint_for_stop_ids(stop_infos.get_stop_ids(line_filters))
+        for point in raw_passages["points"]:
+            for json_passage in point["passingTimes"]:
+                if len(passages) >= max_passages:
+                    break
+                message = ""
+                try:
+                    message = json_passage["message"][lang[LANG_MESSAGE]]
+                except KeyError:
+                    pass
+                try:
+                    if message.upper() == "FIN DE SERVICE" or message.upper() == "EINDE DIENST":
+                        delta = datetime.timedelta(minutes=42, seconds=42)
+                        passages.append(Passage(stop_id=point["pointId"],
+                                                lineId=json_passage["lineId"],
+                                                destination="",
+                                                expectedArrivalTime=(now + delta).strftime("%Y-%m-%dT%H:%M:%S"),
+                                                lineInfos=await self._shapefile_service.get_line_info(
+                                                    json_passage["lineId"]),
+                                                message=message,
+                                                now=now))
+                    else:
+                        is_only_end_of_service = False
+                        passages.append(Passage(stop_id=point["pointId"],
+                                                lineId=json_passage["lineId"],
+                                                destination=json_passage["destination"][lang[LANG_STOP_NAME]],
+                                                expectedArrivalTime=json_passage.get("expectedArrivalTime", None),
+                                                lineInfos=await self._shapefile_service.get_line_info(
+                                                    json_passage["lineId"]),
+                                                message=message,
+                                                now=now))
+                except KeyError as ke:
+                    LOGGER.error(
+                        "Error while parsing response from STIB. Raw response is: " + str(raw_passages))
+                    raise ke
         if is_only_end_of_service or len(passages) == 0:
             raised_passages = []
             message = "Information from Schedule"
