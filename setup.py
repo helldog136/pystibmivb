@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pystibmivb",
-    version="1.4.0",
+    version="1.4.1",
     author="helldog136",
     author_email="dev.helldog136@outlook.com",
     python_requires=">=3.5.0",
@@ -15,7 +15,7 @@ setuptools.setup(
     long_description=LONG,
     long_description_content_type="text/markdown",
     url="https://github.com/helldog136/pystibmivb",
-    download_url="https://github.com/helldog136/pystibmivb/archive/1.4.0.tar.gz",
+    download_url="https://github.com/helldog136/pystibmivb/archive/1.4.1.tar.gz",
     packages=setuptools.find_packages(exclude=('tests',)),
     install_requires=[
         'async_timeout',

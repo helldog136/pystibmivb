@@ -1,4 +1,3 @@
-import json
 import logging
 import datetime
 
@@ -44,7 +43,7 @@ class STIBService:
                     break
                 message = ""
                 try:
-                    message = json_passage["message"][lang[LANG_MESSAGE]]
+                    message = json_passage["message"][lang_message]
                 except KeyError:
                     pass
                 try:
@@ -62,7 +61,7 @@ class STIBService:
                         is_only_end_of_service = False
                         passages.append(Passage(stop_id=point["pointId"],
                                                 lineId=json_passage["lineId"],
-                                                destination=json_passage["destination"][lang[LANG_STOP_NAME]],
+                                                destination=json_passage["destination"][lang_stop_name],
                                                 expectedArrivalTime=json_passage.get("expectedArrivalTime", None),
                                                 lineInfos=await self._shapefile_service.get_line_info(
                                                     json_passage["lineId"]),
@@ -75,9 +74,9 @@ class STIBService:
         if is_only_end_of_service or len(passages) == 0:
             raised_passages = []
             message = "Information from Schedule"
-            if lang[LANG_MESSAGE] == 'fr':
+            if lang_message == 'fr':
                 message = "Information venant du planning"
-            elif lang[LANG_MESSAGE] == 'nl':
+            elif lang_message == 'nl':
                 message = "Informatie uit de planning"
             for atomic in atomic_stop_infos:
                 next_passage = await self._shapefile_service.get_next_stop_passage(atomic.get_stop_id(), now)
