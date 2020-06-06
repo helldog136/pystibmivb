@@ -20,3 +20,37 @@ class Passage(dict):
             delta = get_time_delta(now, expectedArrivalTime)
             self["arriving_in"] = {"min": delta // 60, "sec": delta % 60}
 
+    def __lt__(self, other):
+        if type(other) != type(self):
+            return super(self).__lt__(other)
+        other_arriving_in = other.get("arriving_in", None)
+        if other_arriving_in is not None:
+            self_arriving_in = self.get("arriving_in", None)
+            if self_arriving_in is not None:
+                if self_arriving_in["min"] < other_arriving_in["min"]:
+                    return True
+                elif other_arriving_in["min"] < self_arriving_in["min"]:
+                    return False
+                else:  # == we compare seconds
+                    if self_arriving_in["sec"] < other_arriving_in["sec"]:
+                        return True
+                    else:
+                        return False
+            else:
+                return False
+        else:
+            return True
+
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return super(self).__eq__(other)
+        other_arriving_in = other.get("arriving_in", None)
+        if other_arriving_in is not None:
+            self_arriving_in = self.get("arriving_in", None)
+            if self_arriving_in is not None:
+                return self_arriving_in["min"] == other_arriving_in["min"] \
+                       and self_arriving_in["sec"] == other_arriving_in["sec"]
+            else:
+                return False
+        else:
+            return False
