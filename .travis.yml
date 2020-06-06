@@ -25,6 +25,9 @@ jobs:
       name: "Deploy to PyPi"
       install: pip install -U pip setuptools wheel
       script: skip
+      branches:
+        only:
+          - master
       deploy: &pypi
         provider: pypi
         user: "__token__"
