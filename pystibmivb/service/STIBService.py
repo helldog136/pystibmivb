@@ -19,8 +19,8 @@ class STIBService:
         self._shapefile_service = ShapefileService(stib_api_client)
         self.api_client = stib_api_client
 
-    async def get_passages(self, stop_name, line_filters=None, max_passages=30, lang_stop_name=None, lang_message=None,
-                           now=datetime.datetime.now()):
+    async def get_passages(self, stop_name: str, line_filters: list = None, max_passages: int = None, lang_stop_name: str = None, lang_message: str = None,
+                           now: datetime.datetime = datetime.datetime.now()):
         stop_infos = await self._shapefile_service.get_stop_infos(stop_name)
 
         if lang_message is None or lang_message not in LANGS:
@@ -39,8 +39,6 @@ class STIBService:
         raw_passages = await self.api_client.api_call_passingTimeByPoint_for_stop_ids(stop_infos.get_stop_ids(line_filters))
         for point in raw_passages["points"]:
             for json_passage in point["passingTimes"]:
-                if len(passages) >= max_passages:
-                    break
                 message = ""
                 try:
                     message = json_passage["message"][lang_message]
@@ -89,6 +87,10 @@ class STIBService:
                                                message=message,
                                                now=now))
             raise NoScheduleFromAPIException(raised_passages)
+
+        passages = sorted(passages)
+        if max_passages is not None:
+            passages = passages[0:max_passages]
         return passages
 
 
