@@ -21,8 +21,7 @@ class TestIntegrationWithTrueStibApi(unittest.TestCase):
                 APIClient = STIBAPIClient(LOOP, custom_session, CLIENT_ID, CLIENT_SECRET)
 
                 service = STIBService(APIClient)
-                shapefileService = service._shapefile_service
-                passages = await service.get_passages(stop_name, lang_message='fr', lang_stop_name='fr')
+                await service.get_passages(stop_name, lang_message='fr', lang_stop_name='fr')
             except:
                 result = "Integration test Failed!"
 
