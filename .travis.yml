@@ -16,10 +16,13 @@ script:
   - python test_shapefile_reader.py
   - python test_integration_with_true_stib_api.py
 stages:
+  - test
   - deploy
 
 jobs:
   include:
+    - stage: test
+      name: "Unit testing"
     # Deploy to PyPi
     - stage: deploy
       name: "Deploy to PyPi"
