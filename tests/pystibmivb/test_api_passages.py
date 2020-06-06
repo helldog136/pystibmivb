@@ -24,7 +24,7 @@ class TestPassages(unittest.TestCase):
             APIClient = MockAPIClient()
 
             service = STIBService(APIClient)
-            passages = await service.get_passages(stop_name, lines_filter, lang=('fr', 'fr'))
+            passages = await service.get_passages(stop_name, lines_filter, lang_message='fr', lang_stop_name='fr')
 
             now = datetime.datetime.now()
             delta1 = datetime.timedelta(minutes=3, seconds=25)
@@ -46,7 +46,7 @@ class TestPassages(unittest.TestCase):
             APIClient = MockAPIClient()
 
             service = STIBService(APIClient)
-            passages = await service.get_passages(stop_name, lines_filter, lang=('fr', 'fr'))
+            passages = await service.get_passages(stop_name, lines_filter, lang_message='fr', lang_stop_name='fr')
 
             now = datetime.datetime.now()
             delta1 = datetime.timedelta(minutes=3, seconds=25)
@@ -70,7 +70,7 @@ class TestPassages(unittest.TestCase):
 
             hasRaised = False
             try:
-                await service.get_passages(stop_name, lines_filter, lang=('fr', 'fr'))
+                await service.get_passages(stop_name, lines_filter, lang_message='fr', lang_stop_name='fr')
             except InvalidLineFilterException:
                 hasRaised = True
 
