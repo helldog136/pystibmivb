@@ -8,8 +8,7 @@ from pystibmivb.service.ShapefileService import ShapefileService
 
 LOGGER = logging.getLogger(__name__)
 
-LANG_STOP_NAME = 0
-LANG_MESSAGE = 1
+LANGS = {"fr","nl"}
 
 
 class InvalidLineFilterException(Exception):
@@ -21,12 +20,15 @@ class STIBService:
         self._shapefile_service = ShapefileService(stib_api_client)
         self.api_client = stib_api_client
 
-    async def get_passages(self, stop_name, line_filters=None, max_passages=30, lang: tuple = None,
+    async def get_passages(self, stop_name, line_filters=None, max_passages=30, lang_stop_name=None, lang_message=None,
                            now=datetime.datetime.now()):
         stop_infos = await self._shapefile_service.get_stop_infos(stop_name)
 
-        if lang is None or lang == '':
-            lang = ('fr', 'fr')
+        if lang_message is None or lang_message not in LANGS:
+            lang_message = "fr"
+        if lang_stop_name is None or lang_stop_name not in LANGS:
+            lang_stop_name = "fr"
+
 
         atomic_stop_infos = stop_infos.get_atomic_stop_infos(line_filters)
         if len(atomic_stop_infos) < 1:
