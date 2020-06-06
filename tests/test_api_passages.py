@@ -7,7 +7,7 @@ import unittest
 import aiohttp
 
 from pystibmivb import STIBService, Passage, LineInfo, InvalidLineFilterException, NoScheduleFromAPIException
-from tests.pystibmivb import MockAPIClient
+from tests import MockAPIClient
 
 
 class TestPassages(unittest.TestCase):

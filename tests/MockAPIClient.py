@@ -2,6 +2,8 @@
 import datetime
 import json
 
+import pkg_resources
+
 from pystibmivb import AbstractSTIBAPIClient
 from pystibmivb.client.STIBAPIClient import PASSING_TIME_BY_POINT_SUFFIX
 from pystibmivb.service.ShapefileService import ENDPOINT_SHAPEFILES, ENDPOINT_GTFS
@@ -57,9 +59,9 @@ class MockAPIClient(AbstractSTIBAPIClient):
             return json.loads('''{"points": [{"passingTimes": [], "pointId": "8012"}]}''')
 
     def __init__(self):
-        with open("../resources/shapefiles.zip", 'rb') as sf:
+        with open(pkg_resources.resource_filename("tests.resources", "shapefiles.zip"), 'rb') as sf:
             self.shapefilezipcontent = sf.read()
-        with open("../resources/gtfs.zip", 'rb') as sf:
+        with open(pkg_resources.resource_filename("tests.resources", "gtfs.zip"), 'rb') as sf:
             self.gtfszipcontent = sf.read()
 
     async def api_call(self, endpoint_suffix: str, additional_headers=None):

@@ -3,7 +3,7 @@ import unittest
 from datetime import datetime
 
 from pystibmivb import ShapefileService
-from tests.pystibmivb import MockAPIClient
+from tests import MockAPIClient
 
 
 class TestShapefileReader(unittest.TestCase):
