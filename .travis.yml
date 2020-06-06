@@ -10,7 +10,7 @@ before_install:
 install:
   - pip install -r requirements.txt
   - pip install ".[test]" . # install package + test dependencies
-script: pytest # run tests
+script:
   - python test_api_passages.py
   - python test_api_calls.py
   - python test_shapefile_reader.py
