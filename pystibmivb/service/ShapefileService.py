@@ -54,6 +54,10 @@ def _recur_find_next_passage(date: datetime.datetime, target_time: str, array: l
         return _recur_find_next_passage(date, target_time, array, mid, end)
 
 
+class InvalidStopNameException(Exception):
+    pass
+
+
 class ShapefileService:
     def __init__(self, stib_api_client: AbstractSTIBAPIClient):
         self.api_client = stib_api_client
@@ -114,6 +118,8 @@ class ShapefileService:
                         or record["descr_fr"].upper() == stop_name.upper() or record["descr_nl"].upper() == stop_name.upper():
                     res.add_stop(record["stop_id"], record["numero_lig"], record["variante"], record["terminus"])
                     res.add_line_info(await self.get_line_info(record["numero_lig"]))
+            if len(res.get_stop_ids()) == 0:
+                raise InvalidStopNameException("Could not find any stop matching stop name: "+stop_name)
             res.set_locations(await self.get_stop_locations(res.get_stop_ids()))
             self.stops_cache[stop_name] = res
         return self.stops_cache[stop_name]

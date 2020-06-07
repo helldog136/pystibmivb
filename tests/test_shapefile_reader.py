@@ -21,6 +21,7 @@ class TestShapefileReader(unittest.TestCase):
             sf_reader = ShapefileService(APIClient)
 
             frinfo = await sf_reader.get_stop_infos("Scherdemael")
+            print(frinfo)
             nlinfo = await sf_reader.get_stop_infos("Scherdemaal")
 
             self.assertEqual(frinfo.get_line_info(46).get_line_color(), nlinfo.get_line_info(46).get_line_color())

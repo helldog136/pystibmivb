@@ -1,2 +1,2 @@
 from .STIBService import STIBService, InvalidLineFilterException, NoScheduleFromAPIException
-from .ShapefileService import ShapefileService
+from .ShapefileService import ShapefileService, InvalidStopNameException
