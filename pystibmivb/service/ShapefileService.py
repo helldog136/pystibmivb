@@ -42,7 +42,7 @@ def _recur_find_next_passage(date: datetime.datetime, target_time: str, array: l
     if mid == start:
         if target_time < array[end]:
             h, m, s = array[end].split(':')
-            return datetime.datetime(year=date.year, month=date.month, day=date.day + int(h)//24, hour=int(h)%24,
+            return datetime.datetime(year=date.year, month=date.month, day=date.day + int(h) // 24, hour=int(h) % 24,
                                      minute=int(m), second=int(s))
         else:
             h, m, s = array[0].split(':')
@@ -107,19 +107,33 @@ class ShapefileService:
         stop_schedule = await self.get_stop_schedule(stop_id)
         return _recur_find_next_passage(time, time.strftime("%H:%M:%S"), stop_schedule, 0, len(stop_schedule) - 1)
 
+    async def get_stop_names(self, lang: str = "fr") -> set:
+        await self._refresh_files()
+        if len(self.stops_cache.keys()) < 15:
+            sf = shapefile.Reader(STOPS_FILEPATH)
+            for record in sf.records():
+                record = record.as_dict()
+                if lang == "fr":
+                    self.stops_cache[record["alpha_fr"]] = self.stops_cache.get(record["alpha_fr"], None)
+                elif lang == "nl":
+                    self.stops_cache[record["alpha_nl"]] = self.stops_cache.get(record["alpha_nl"], None)
+        return set(self.stops_cache.keys())
+
     async def get_stop_infos(self, stop_name: str) -> StopInfo:
         await self._refresh_files()
-        if stop_name not in self.stops_cache.keys():
+        if self.stops_cache.get(stop_name, None) is None:
             sf = shapefile.Reader(STOPS_FILEPATH)
             res = StopInfo(stop_name)
             for record in sf.records():
                 record = record.as_dict()
-                if record["alpha_fr"].upper() == stop_name.upper() or record["alpha_nl"].upper() == stop_name.upper()\
-                        or record["descr_fr"].upper() == stop_name.upper() or record["descr_nl"].upper() == stop_name.upper():
+                if record["alpha_fr"].upper() == stop_name.upper() \
+                        or record["alpha_nl"].upper() == stop_name.upper() \
+                        or record["descr_fr"].upper() == stop_name.upper() \
+                        or record["descr_nl"].upper() == stop_name.upper():
                     res.add_stop(record["stop_id"], record["numero_lig"], record["variante"], record["terminus"])
                     res.add_line_info(await self.get_line_info(record["numero_lig"]))
             if len(res.get_stop_ids()) == 0:
-                raise InvalidStopNameException("Could not find any stop matching stop name: "+stop_name)
+                raise InvalidStopNameException("Could not find any stop matching stop name: " + stop_name)
             res.set_locations(await self.get_stop_locations(res.get_stop_ids()))
             self.stops_cache[stop_name] = res
         return self.stops_cache[stop_name]
