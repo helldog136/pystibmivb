@@ -1,5 +1,5 @@
 import unittest
-from pystibmivb import STIBAPIClient, STIBService
+from pystibmivb import STIBAPIClient, STIBService, STIBStop
 import aiohttp
 import asyncio
 
@@ -13,7 +13,6 @@ class TestIntegrationWithTrueStibApi(unittest.TestCase):
 
     def test_filtered_in_terminus(self):
         async def go(LOOP):
-            result = "Integration test Succeded!"
             try:
                 stop_name = "Saint-Denis"
                 custom_session = aiohttp.ClientSession()
@@ -21,11 +20,13 @@ class TestIntegrationWithTrueStibApi(unittest.TestCase):
                 APIClient = STIBAPIClient(LOOP, custom_session, CLIENT_ID, CLIENT_SECRET)
 
                 service = STIBService(APIClient)
-                print(await service.get_passages(stop_name, lang_message='fr', lang_stop_name='fr'))
-            except:
-                result = "Integration test Failed!"
 
-            self.assertEqual(result, "Integration test Succeded!")
+                stop = STIBStop(service, stop_name)
+
+                print(await stop.get_passages())
+                await custom_session.close()
+            except Exception as e:
+                self.fail("Integration test Failed! An exception occurred"+str(e))
 
         self.LOOP.run_until_complete(go(self.LOOP))
 

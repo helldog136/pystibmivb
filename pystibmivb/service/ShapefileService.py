@@ -60,6 +60,7 @@ class InvalidStopNameException(Exception):
 
 class ShapefileService:
     def __init__(self, stib_api_client: AbstractSTIBAPIClient):
+        self._force_update = False
         self.api_client = stib_api_client
         self.lines_cache = {}
         self.stops_cache = {}
@@ -86,7 +87,8 @@ class ShapefileService:
                     line_text_color = await self.get_line_text_color(line_nr)
                     self.lines_cache[line_nr] = LineInfo(int(current_line_nr), line_type.upper(), line_color,
                                                          line_text_color)
-                    break
+                    return self.lines_cache[line_nr]
+            raise ValueError("Line nr:"+line_nr+" not found in LINES file")
         return self.lines_cache[line_nr]
 
     async def get_stop_schedule(self, stop_id: str):
@@ -103,7 +105,8 @@ class ShapefileService:
             LOGGER.info("Stop schedule for stop_id:" + stop_id + " successfully cached!")
         return self.stops_schedules_cache[stop_id]
 
-    async def get_next_stop_passage(self, stop_id: str, time: datetime.datetime) -> datetime.datetime:
+    async def get_next_stop_passage(self, stop_id: str, line_filter: list, time: datetime.datetime) -> datetime.datetime:
+        # TODO fetch the next time in schedule being part of the lines in line_filter
         stop_schedule = await self.get_stop_schedule(stop_id)
         return _recur_find_next_passage(time, time.strftime("%H:%M:%S"), stop_schedule, 0, len(stop_schedule) - 1)
 
@@ -130,7 +133,7 @@ class ShapefileService:
                         or record["alpha_nl"].upper() == stop_name.upper() \
                         or record["descr_fr"].upper() == stop_name.upper() \
                         or record["descr_nl"].upper() == stop_name.upper():
-                    res.add_stop(record["stop_id"], record["numero_lig"], record["variante"], record["terminus"])
+                    res.add_stop(record["stop_id"], record["numero_lig"], record["Variante"], record["terminus"])
                     res.add_line_info(await self.get_line_info(record["numero_lig"]))
             if len(res.get_stop_ids()) == 0:
                 raise InvalidStopNameException("Could not find any stop matching stop name: " + stop_name)
@@ -153,12 +156,19 @@ class ShapefileService:
             # save data to disk
             zip_path = GTFS_ZIP_FILEPATH
             LOGGER.info("Saving new zip of gtfs to " + str(zip_path))
-            with open(zip_path, 'wb') as output:
-                output.write(zipped_data)
-                output.close()
+            await self.extract_zipped_data(zip_path, zipped_data)
+            LOGGER.info("Finished updating GTFS!")
+            self.lines_cache = {}
+            self.stops_schedules_cache = {}
+        else:
+            LOGGER.error("Unable to update GTFS...")
 
-            # extract the data
-            zfobj = zipfile.ZipFile(zip_path)
+    async def extract_zipped_data(self, zip_path, zipped_data):
+        with open(zip_path, 'wb') as output:
+            output.write(zipped_data)
+            output.close()
+        # extract the data
+        with zipfile.ZipFile(zip_path) as zfobj:
             for name in zfobj.namelist():
                 uncompressed = zfobj.read(name)
                 name = name.split('/')[-1]
@@ -168,13 +178,7 @@ class ShapefileService:
                 LOGGER.info("Saving extracted file to " + str(output_filename))
                 with open(output_filename, 'wb') as output:
                     output.write(uncompressed)
-
-            # TODO os.remove(zip_filename)
-            LOGGER.info("Finished updating GTFS!")
-            self.lines_cache = {}
-            self.stops_schedules_cache = {}
-        else:
-            LOGGER.error("Unable to update GTFS...")
+        os.remove(zip_path)
 
     async def _refresh_shapefiles(self):
         """ Get most recent file info if not in local cache (api for files can be called only once per minute.
@@ -185,23 +189,7 @@ class ShapefileService:
             # save data to disk
             zip_path = SHAPEFILES_ZIP_FILEPATH
             LOGGER.info("Saving new zip of shapefiles to " + str(zip_path))
-            with open(zip_path, 'wb') as output:
-                output.write(zipped_data)
-                output.close()
-
-            # extract the data
-            zfobj = zipfile.ZipFile(zip_path)
-            for name in zfobj.namelist():
-                uncompressed = zfobj.read(name)
-                name = name.split('/')[-1]
-
-                # save uncompressed data to disk
-                output_filename = SHAPEFILESFOLDERPATH + SEP + name
-                LOGGER.info("Saving extracted file to " + str(output_filename))
-                with open(output_filename, 'wb') as output:
-                    output.write(uncompressed)
-
-            # TODO os.remove(zip_filename)
+            await self.extract_zipped_data(zip_path, zipped_data)
             LOGGER.info("Finished updating Shapefiles!")
             self.stops_cache = {}
         else:
@@ -226,7 +214,7 @@ class ShapefileService:
                 must_update = True
                 LOGGER.info(
                     f"Delta since last update is {now - timestamp} which is greater than {DELTA_MAX_TIMESTAMP}. Invalidating files...")
-        return must_update
+        return must_update or self._force_update
 
     async def get_stop_locations(self, stop_ids: list):
         await self._refresh_files()

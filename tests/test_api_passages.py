@@ -7,7 +7,7 @@ import unittest
 import aiohttp
 
 from pystibmivb import STIBService, Passage, LineInfo, InvalidLineFilterException, NoScheduleFromAPIException, \
-    InvalidStopNameException
+    InvalidStopNameException, STIBStop
 from tests import MockAPIClient
 
 
@@ -19,12 +19,14 @@ class TestPassages(unittest.TestCase):
         async def go(LOOP):
             stop_name = "scherdemael"
             lines_filter = [(46, "Glibert")]
-            custom_session = aiohttp.ClientSession()
 
             APIClient = MockAPIClient()
 
             service = STIBService(APIClient)
-            passages = await service.get_passages(stop_name, lines_filter, lang_message='fr', lang_stop_name='fr')
+
+            stop = STIBStop(service, stop_name, lines_filter)
+
+            passages = await stop.get_passages()
 
             now = datetime.datetime.now()
             delta1 = datetime.timedelta(minutes=3, seconds=25)
@@ -57,12 +59,11 @@ class TestPassages(unittest.TestCase):
         async def go(LOOP):
             stop_name = "Scherdemael"
             lines_filter = [(46, 1)]
-            custom_session = aiohttp.ClientSession()
 
             APIClient = MockAPIClient()
 
             service = STIBService(APIClient)
-            passages = await service.get_passages(stop_name, lines_filter, lang_message='fr', lang_stop_name='fr')
+            passages = await service.get_passages(stop_name, lines_filter)
 
             now = datetime.datetime.now()
             delta1 = datetime.timedelta(minutes=3, seconds=25)
@@ -78,7 +79,6 @@ class TestPassages(unittest.TestCase):
         async def go(LOOP):
             stop_name = "Scherdemael"
             lines_filter = [(104, 1)]
-            custom_session = aiohttp.ClientSession()
 
             APIClient = MockAPIClient()
 
@@ -86,7 +86,7 @@ class TestPassages(unittest.TestCase):
 
             hasRaised = False
             try:
-                await service.get_passages(stop_name, lines_filter, lang_message='fr', lang_stop_name='fr')
+                await service.get_passages(stop_name, lines_filter)
             except InvalidLineFilterException:
                 hasRaised = True
 
@@ -135,7 +135,6 @@ class TestPassages(unittest.TestCase):
         async def go(LOOP):
             stop_name = "De Brouckère"
             lines_filter = [(5, 1)]
-            custom_session = aiohttp.ClientSession()
 
             APIClient = MockAPIClient()
 
@@ -149,7 +148,7 @@ class TestPassages(unittest.TestCase):
                 passages = e.get_next_passages()
             self.assertEqual(exception, "Raised")
             self.assertGreaterEqual(len(passages), 1)
-            self.assertEqual(passages[0]['expected_arrival_time'], '2020-01-29T00:06:31')
+            self.assertEqual('2020-01-29T00:07:01', passages[0]['expected_arrival_time'])
 
         self.LOOP.run_until_complete(go(self.LOOP))
 

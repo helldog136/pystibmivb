@@ -19,6 +19,7 @@ class TestShapefileReader(unittest.TestCase):
             APIClient = MockAPIClient()
 
             sf_reader = ShapefileService(APIClient)
+            sf_reader._force_update = True
 
             frinfo = await sf_reader.get_stop_infos("Scherdemael")
             print(frinfo)
@@ -30,7 +31,7 @@ class TestShapefileReader(unittest.TestCase):
 
             l46 = await sf_reader.get_line_info(46)
             self.assertEqual(l46.get_line_color(), "#DE3B21")
-            self.assertEqual(l46.get_line_text_color(), "#FFFFFF")
+            self.assertEqual(l46.get_line_text_color(), "#000000")
             self.assertEqual(l46.get_line_type(), "B")
             self.assertEqual(l46.get_line_nr(), 46)
 
@@ -46,6 +47,7 @@ class TestShapefileReader(unittest.TestCase):
             APIClient = MockAPIClient()
 
             sf_reader = ShapefileService(APIClient)
+            sf_reader._force_update = True
 
             info = await sf_reader.get_stop_infos("Scherdemael")
 
@@ -60,15 +62,16 @@ class TestShapefileReader(unittest.TestCase):
             APIClient = MockAPIClient()
 
             sf_reader = ShapefileService(APIClient)
+            sf_reader._force_update = True
 
             info = await sf_reader.get_stop_infos("Scherdemael")
 
             print(info.get_locations())
-            self.assertAlmostEqual(info.get_locations()['3755']["lat"], 50.8312, delta=0.0001)
-            self.assertAlmostEqual(info.get_locations()['3755']["lon"], 4.2900, delta=0.0001)
+            self.assertAlmostEqual(50.8312, info.get_locations()['3755']["lat"], delta=0.0001)
+            self.assertAlmostEqual(4.2900, info.get_locations()['3755']["lon"], delta=0.0001)
 
-            self.assertAlmostEqual(info.get_locations()['3713']["lat"], 50.8309, delta=0.0001)
-            self.assertAlmostEqual(info.get_locations()['3713']["lon"], 4.2892, delta=0.0001)
+            self.assertAlmostEqual(50.8309, info.get_locations()['3713']["lat"], delta=0.0001)
+            self.assertAlmostEqual(4.2892, info.get_locations()['3713']["lon"], delta=0.0001)
 
         self.LOOP.run_until_complete(go(self.LOOP))
 
@@ -78,18 +81,19 @@ class TestShapefileReader(unittest.TestCase):
             APIClient = MockAPIClient()
 
             sf_reader = ShapefileService(APIClient)
+            sf_reader._force_update = True
 
             now = datetime.now()
-            info = await sf_reader.get_next_stop_passage('3755', now)
+            info = await sf_reader.get_next_stop_passage('3755', None, now)
             self.assertLess(now, info)
-            info = await sf_reader.get_next_stop_passage('3755', datetime(2020, 1, 28, hour=2, minute=32, second=2))
-            self.assertEqual(info, datetime(2020, 1, 28, hour=5, minute=7, second=27))
-            info = await sf_reader.get_next_stop_passage('3755', datetime(2020, 1, 28, hour=5, minute=10, second=2))
-            self.assertEqual(info, datetime(2020, 1, 28, hour=5, minute=18, second=27))
-            info = await sf_reader.get_next_stop_passage('3755', datetime(2020, 1, 28, hour=23, minute=58, second=2))
-            self.assertEqual(info, datetime(2020, 1, 28, hour=23, minute=59, second=51))
-            info = await sf_reader.get_next_stop_passage('3755', datetime(2020, 1, 28, hour=23, minute=59, second=52))
-            self.assertEqual(info, datetime(2020, 1, 29, hour=5, minute=7, second=27))
+            info = await sf_reader.get_next_stop_passage('3755', None, datetime(2020, 1, 28, hour=2, minute=32, second=2))
+            self.assertEqual(datetime(2020, 1, 28, hour=5, minute=7, second=27), info)
+            info = await sf_reader.get_next_stop_passage('3755', None, datetime(2020, 1, 28, hour=5, minute=10, second=2))
+            self.assertEqual(datetime(2020, 1, 28, hour=5, minute=12, second=44), info)
+            info = await sf_reader.get_next_stop_passage('3755', None, datetime(2020, 1, 28, hour=23, minute=58, second=2))
+            self.assertEqual(datetime(2020, 1, 28, hour=23, minute=58, second=51), info)
+            info = await sf_reader.get_next_stop_passage('3755', None, datetime(2020, 1, 29, hour=0, minute=59, second=52))
+            self.assertEqual(datetime(2020, 1, 29, hour=5, minute=7, second=27), info)
 
         self.LOOP.run_until_complete(go(self.LOOP))
 

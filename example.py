@@ -3,12 +3,12 @@ import asyncio
 
 import aiohttp
 
-from pystibmivb import STIBAPIClient
+from pystibmivb import STIBAPIClient, STIBStop
 from pystibmivb import STIBService
 from pystibmivb import ShapefileService
 
-CLIENT_ID = 'Wirff1HT1tTH7mLX1dMQAbOEHDoa' # Put your openapi client ID here
-CLIENT_SECRET = 'tYKqSKbmjw3hKsoNtaaKKtXXP0sa' # Put your openapi client secret here
+CLIENT_ID = 'Wirff1HT1tTH7mLX1dMQAbOEHDoa'  # Put your openapi client ID here
+CLIENT_SECRET = 'tYKqSKbmjw3hKsoNtaaKKtXXP0sa'  # Put your openapi client secret here
 
 
 async def go(LOOP):
@@ -17,8 +17,9 @@ async def go(LOOP):
     custom_session = aiohttp.ClientSession()
     APIClient = STIBAPIClient(LOOP, custom_session, CLIENT_ID, CLIENT_SECRET)
     service = STIBService(APIClient)
-    print(await service.get_passages(stop_name, lines_filter, max_passages=3))
 
+    stop = STIBStop(service, stop_name, lines_filter, 3)
+    print(await stop.get_passages())
 
     shapefile_service = ShapefileService(APIClient)
 
@@ -34,6 +35,3 @@ async def go(LOOP):
 if __name__ == '__main__':
     LOOP = asyncio.get_event_loop()
     LOOP.run_until_complete(go(LOOP))
-
-
-

@@ -59,11 +59,11 @@ class StopInfo:
             res = self.lines
         return res
 
-    def get_stop_ids(self, line_filters=None) -> list:
+    def get_stop_ids(self, line_filter=None) -> list:
         res = []
-        if line_filters is not None and len(line_filters) > 0:
+        if line_filter is not None and len(line_filter) > 0:
             line_filter_dict = {}
-            for line_nr, line_variant_or_dest in line_filters:
+            for line_nr, line_variant_or_dest in line_filter:
                 line_filter_dict[line_nr] = line_filter_dict.get(line_nr, [])
                 line_filter_dict[line_nr].append(
                     line_variant_or_dest.upper() if isinstance(line_variant_or_dest, str) else line_variant_or_dest)

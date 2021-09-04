@@ -19,23 +19,31 @@ import asyncio
 
 import aiohttp
 
-from pystibmivb import STIBAPIClient
-from pystibmivb.service.STIBService import STIBService
+from pystibmivb import STIBAPIClient, STIBStop
+from pystibmivb import STIBService
+from pystibmivb import ShapefileService
 
-CLIENT_ID = '' # Put your openapi client ID here
-CLIENT_SECRET = '' # Put your openapi client secret here
+CLIENT_ID = ''  # Put your openapi client ID here
+CLIENT_SECRET = ''  # Put your openapi client secret here
 
 
 async def go(LOOP):
-    stop_name = "scherdemael"
+    stop_name = "Scherdemael"
     lines_filter = [(46, "Glibert")]
-    # lines_filter = [(46, 1)] # you can also give dirction instead of terminus
     custom_session = aiohttp.ClientSession()
-
     APIClient = STIBAPIClient(LOOP, custom_session, CLIENT_ID, CLIENT_SECRET)
-
     service = STIBService(APIClient)
-    print(await service.get_passages(stop_name, lines_filter))
+
+    stop = STIBStop(service, stop_name, lines_filter, 3)
+    print(await stop.get_passages())
+
+    shapefile_service = ShapefileService(APIClient)
+
+    scherdemael = await shapefile_service.get_stop_infos(stop_name)
+    print(scherdemael.get_lines())
+    # doesn't really make sense to specify a filter but hey... you can
+    print(scherdemael.get_lines(lines_filter))
+    print(scherdemael.get_lines_with_destinations(lines_filter))
 
     await custom_session.close()
 
@@ -43,6 +51,7 @@ async def go(LOOP):
 if __name__ == '__main__':
     LOOP = asyncio.get_event_loop()
     LOOP.run_until_complete(go(LOOP))
+
 
 ```
 

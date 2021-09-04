@@ -135,7 +135,7 @@ class STIBAPIClient(AbstractSTIBAPIClient):
         headers.update(additional_headers)
         data = None
         try:
-            async with async_timeout.timeout(5, loop=self.loop):
+            async with async_timeout.timeout(30, loop=self.loop):
                 called_url = URL(API_BASE_URL + endpoint_suffix, encoded=True)
                 LOGGER.debug("Endpoint URL: %s", str(called_url))
                 response = await self.session.get(url=called_url, headers=headers)
