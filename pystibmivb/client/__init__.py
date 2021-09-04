@@ -1,1 +1,1 @@
-from .STIBAPIClient import AbstractSTIBAPIClient, STIBAPIClient
+from .STIBAPIClient import AbstractSTIBAPIClient, STIBAPIClient, STIBAPIAuthClient

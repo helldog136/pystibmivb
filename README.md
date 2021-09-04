@@ -19,7 +19,7 @@ import asyncio
 
 import aiohttp
 
-from pystibmivb import STIBAPIClient, STIBStop
+from pystibmivb import STIBAPIClient, STIBStop, STIBAPIAuthClient
 from pystibmivb import STIBService
 from pystibmivb import ShapefileService
 
@@ -31,7 +31,7 @@ async def go(LOOP):
     stop_name = "Scherdemael"
     lines_filter = [(46, "Glibert")]
     custom_session = aiohttp.ClientSession()
-    APIClient = STIBAPIClient(LOOP, custom_session, CLIENT_ID, CLIENT_SECRET)
+    APIClient = STIBAPIClient(LOOP, custom_session, STIBAPIAuthClient(custom_session, CLIENT_ID, CLIENT_SECRET))
     service = STIBService(APIClient)
 
     stop = STIBStop(service, stop_name, lines_filter, 3)

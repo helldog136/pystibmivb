@@ -18,7 +18,6 @@ PASSING_TIME_BY_POINT_SUFFIX = "/OperationMonitoring/4.0/PassingTimeByPoint/"
 class OAuthTokenManager(object):
     def __init__(
             self,
-            loop,
             session,
             client_id,
             client_secret,
@@ -30,7 +29,6 @@ class OAuthTokenManager(object):
         self.session = session
         self.client_secret = client_secret
         self.client_id = client_id
-        self.loop = loop
         self.url = url
         self.parameters = parameters
         self.renew_pad_secs = renew_pad_secs
@@ -43,7 +41,7 @@ class OAuthTokenManager(object):
         headers[
             'Authorization'] = f'Basic {str(base64.b64encode((self.client_id + ":" + self.client_secret).encode("utf-8")), "utf-8")}'
         try:
-            async with async_timeout.timeout(5, loop=self.loop):
+            async with async_timeout.timeout(5):
                 response = await self.session.post(data={"grant_type": "client_credentials"},
                                                    url=self.url,
                                                    headers=headers)
@@ -81,22 +79,11 @@ class AbstractSTIBAPIClient(ABC):
         pass
 
 
-class STIBAPIClient(AbstractSTIBAPIClient):
-    """A class for common functions."""
-
-    def __init__(self,
-                 loop: asyncio.events.AbstractEventLoop,
-                 session: aiohttp.ClientSession,
-                 client_id: str,
-                 client_secret: str):
-        """Initialize the class."""
-        self.loop = loop
-        self.session = session
-        if self.session is None:
-            self.session = aiohttp.ClientSession()
+class STIBAPIAuthClient:
+    def __init__(self, session: aiohttp.ClientSession, client_id: str, client_secret: str):
         self.client_id = client_id
         self.client_secret = client_secret
-        self.token_manager = OAuthTokenManager(self.loop, self.session,
+        self.token_manager = OAuthTokenManager(session,
                                                self.client_id, self.client_secret,
                                                API_BASE_URL + '/token', )
 
@@ -109,8 +96,21 @@ class STIBAPIClient(AbstractSTIBAPIClient):
 
         return self.token_manager.token
 
+
+class STIBAPIClient(AbstractSTIBAPIClient):
+    """A class for common functions."""
+
+    def __init__(self,
+                 loop: asyncio.events.AbstractEventLoop,
+                 session: aiohttp.ClientSession,
+                 authClient: STIBAPIAuthClient):
+        """Initialize the class."""
+        self.authClient = authClient
+        self.loop = loop
+        self.session = session
+
     async def api_call_passingTimeByPoint_for_stop_id(self, point_id: str) -> dict:
-        return await self.api_call(PASSING_TIME_BY_POINT_SUFFIX+point_id)
+        return await self.api_call(PASSING_TIME_BY_POINT_SUFFIX + point_id)
 
     async def _api_call_passingTimeByPoint_for_10_stop_ids(self, point_ids: list) -> dict:
         return await self.api_call(PASSING_TIME_BY_POINT_SUFFIX + "%2C".join(point_ids))
@@ -118,7 +118,7 @@ class STIBAPIClient(AbstractSTIBAPIClient):
     async def api_call_passingTimeByPoint_for_stop_ids(self, point_ids: set) -> dict:
         res = {"points": []}
         subset_point_ids = []
-        for i in range(1, len(point_ids)+1):
+        for i in range(1, len(point_ids) + 1):
             subset_point_ids.append(point_ids.pop())
             if i % 10 == 0 or len(point_ids) == 0:
                 subset_res = await self._api_call_passingTimeByPoint_for_10_stop_ids(subset_point_ids)
@@ -131,7 +131,7 @@ class STIBAPIClient(AbstractSTIBAPIClient):
             additional_headers = {}
 
         """Call the API."""
-        headers = {'Authorization': "Bearer " + await self.async_get_access_token()}
+        headers = {'Authorization': "Bearer " + await self.authClient.async_get_access_token()}
         headers.update(additional_headers)
         data = None
         try:

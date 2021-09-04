@@ -1,5 +1,5 @@
 import unittest
-from pystibmivb import STIBAPIClient, STIBService, STIBStop
+from pystibmivb import STIBAPIClient, STIBService, STIBStop, STIBAPIAuthClient
 import aiohttp
 import asyncio
 
@@ -17,7 +17,7 @@ class TestIntegrationWithTrueStibApi(unittest.TestCase):
                 stop_name = "Saint-Denis"
                 custom_session = aiohttp.ClientSession()
 
-                APIClient = STIBAPIClient(LOOP, custom_session, CLIENT_ID, CLIENT_SECRET)
+                APIClient = STIBAPIClient(LOOP, custom_session, STIBAPIAuthClient(custom_session, CLIENT_ID, CLIENT_SECRET))
 
                 service = STIBService(APIClient)
 
